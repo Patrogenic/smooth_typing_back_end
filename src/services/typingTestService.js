@@ -24,7 +24,6 @@ const analyzeData = [
 
       let mistakeData = getMistakeData(typedText.map(item => item.char), text);
       let charSequencesMap = buildCharSequencesMap(typedText, text, seqLen);
-
       let sequences = getBestAndWorstSequences(charSequencesMap);
 
       //after calculations, I save to database if there is a valid authtoken provided, in both cases the server responds with the new calculations
@@ -87,8 +86,6 @@ const sortMap = (seqMap) => {
 //I will need to do boundary checking for the slice methods on the arrays
 //this will need to be refactored
 const getMistakeData = (typedText, text) => {
-  let mistakeSequences = [];
-  let expectedSequences = [];
   let mistakeData = [];
   let i = 1;
   let j = 1;
@@ -112,8 +109,6 @@ const getMistakeData = (typedText, text) => {
         expected: text.slice(startIndex - 2, startIndex + 3).join(''),
       };
       mistakeData.push(mistake);
-      // mistakeSequences.push(typedText.slice(startIndex - 2, startIndex).join('') + currMistake + typedText.slice(i, i + 3).join(''));
-      // expectedSequences.push(text.slice(startIndex - 2, startIndex + 3).join(''));
     }
 
     i++;
@@ -121,7 +116,6 @@ const getMistakeData = (typedText, text) => {
   }
 
   return mistakeData;
-
 }
 
 //causes side effects to typedText
@@ -184,4 +178,23 @@ const calcAvgTime = (typedText, charSequence, isFirstInstance) => {
 
 module.exports = {
   analyzeData,
+  exportedForTesting: {
+    getBestAndWorstSequences,
+    sortMap,
+    getMistakeData,
+    buildCharSequencesMap,
+    buildSequence,
+    addTimes,
+    calcAvgTime,
+  }
 }
+
+// exports.exportedForTesting = {
+//   getBestAndWorstSequences,
+//   sortMap,
+//   getMistakeData,
+//   buildCharSequencesMap,
+//   buildSequence,
+//   addTimes,
+//   calcAvgTime,
+// }
