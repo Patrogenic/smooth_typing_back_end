@@ -3,28 +3,52 @@ global.TextDecoder = require("util").TextDecoder;
 const typingTestService = require('./typingTestService').exportedForTesting;
 
 
-const typedText = [
+const typedTextLastCharMistake = [
   {
       char: "s",
       time: 0
   },
   {
       char: "o",
-      time: 86
+      time: 50
   },
   {
       char: "m",
-      time: 174
+      time: 75
   },
   {
       char: "m",
-      time: 174
+      time: 100
   },
   {
       char: "e",
-      time: 123
+      time: 150
   }
 ]
+
+const typedTextFirstCharMistake = [
+  {
+      char: "s",
+      time: 0
+  },
+  {
+      char: "s",
+      time: 50
+  },
+  {
+      char: "o",
+      time: 75
+  },
+  {
+      char: "m",
+      time: 100
+  },
+  {
+      char: "e",
+      time: 150
+  }
+]
+
 
 const text = "some";
 
@@ -69,6 +93,45 @@ describe('typingTestService', () => {
 
       let avgTime = typingTestService.calcAvgTime(typedText, charSequence, isFirstInstance);
       expect(avgTime).toBe(125);
+    });
+  });
+  describe('#buildCharSequencesMap', () => {
+    it('should return proper map when last char is a mistake', () => {
+      let sequences = typingTestService.buildCharSequencesMap(typedTextLastCharMistake, text, 2);
+      expect(sequences["me"]).toEqual({ avgTime: 325, instances: 1 });
+      expect(sequences["om"]).toEqual({ avgTime: 125, instances: 1 });
+    });
+    it('should return proper map when first char is a mistake', () => {
+      let sequences = typingTestService.buildCharSequencesMap(typedTextFirstCharMistake, text, 2);
+      expect(sequences["me"]).toEqual({ avgTime: 250, instances: 1 });
+      expect(sequences["om"]).toEqual({ avgTime: 175, instances: 1 });
+    });
+  });
+  describe('#getMistakeData', () => {
+    it('should get mistake data from middle of string', () => {
+      let mistakeData = typingTestService.getMistakeData("welccome", "welcome");
+      expect(mistakeData[0].actual).toBe("lccome");
+      expect(mistakeData[0].expected).toBe("lcome");
+    });
+    it('should get mistake data from first char', () => {
+      let mistakeData = typingTestService.getMistakeData("awelcome", "welcome");
+      expect(mistakeData[0].actual).toBe("awelco");
+      expect(mistakeData[0].expected).toBe("welco");
+    });
+    it('should get mistake data from second char', () => {
+      let mistakeData = typingTestService.getMistakeData("weelcome", "welcome");
+      expect(mistakeData[0].actual).toBe("weelcom");
+      expect(mistakeData[0].expected).toBe("welcom");
+    });
+    it('should get mistake data from last char', () => {
+      let mistakeData = typingTestService.getMistakeData("welcomme", "welcome");
+      expect(mistakeData[0].actual).toBe("omme");
+      expect(mistakeData[0].expected).toBe("ome");
+    });
+    it('should get mistake data from second to last char', () => {
+      let mistakeData = typingTestService.getMistakeData("welcoome", "welcome");
+      expect(mistakeData[0].actual).toBe("coome");
+      expect(mistakeData[0].expected).toBe("come");
     });
   });
 });

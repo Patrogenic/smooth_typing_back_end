@@ -43,8 +43,8 @@ const register = [
       }else if(req.body.password !== req.body.password_confirmed){
         throw new Error("Passwords Differ");
       }else{
-        const token = await saveUser(req.body.username, req.body.password);
-        res.json({ token });
+        const user = await saveUser(req.body.username, req.body.password);
+        res.json(user);
       }
     }
   }
@@ -56,7 +56,7 @@ const saveUser = async (username, password) => {
   let user = await new User({ username, password }).save();
 
   const token = jwt.sign({ user }, process.env.TOKEN_SECRET, { expiresIn: '1hr' });
-  return token;
+  return { username: user.username,  token};
 }
 
 const login = [
@@ -76,8 +76,8 @@ const login = [
         const match = await bcrypt.compare(req.body.password, user.password);
 
         if(match){
-          const token = jwt.sign({ user }, process.env.TOKEN_SECRET, { expiresIn: '1h' });
-          res.json({ token });
+          const token = jwt.sign({ user }, process.env.TOKEN_SECRET, { expiresIn: '1s' });
+          res.json({ username: user.username, token });
         }else{
           throw new Error("Invalid Credentials");
         }
@@ -88,7 +88,35 @@ const login = [
   }
 ]
 
+const validate = (req, res) => {
+  // verifyToken(req);
+  const token = req.headers['x-access-token'];
+
+  if(token){
+    let authData = jwt.verify(req.token, process.env.TOKEN_SECRET);
+  
+    if(authData){
+      res.sendStatus(200);
+    }else{
+      res.sendStatus(403);
+    }
+  }else{
+    res.sendStatus(403);
+  }
+}
+
+// const verifyToken = (req) => {
+//   const token = req.headers['x-access-token'];
+
+//   if(token){
+//     req.token = token;
+//   }else{
+//     res.sendStatus(403);
+//   }
+// }
+
 module.exports = {
   register,
   login,
+  validate,
 }

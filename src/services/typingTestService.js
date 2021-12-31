@@ -85,28 +85,38 @@ const sortMap = (seqMap) => {
 //edge cases will need to checked (it might be fine if this function starts the iterators at 0)
 //I will need to do boundary checking for the slice methods on the arrays
 //this will need to be refactored
-const getMistakeData = (typedText, text) => {
+const getMistakeData = (typedTextChars, text) => {
   let mistakeData = [];
   let i = 1;
   let j = 1;
 
-  while(j < text.length - 2){
+  while(j < text.length){
 
     let currMistake = "";
     let startIndex = null;
 
-    while(typedText[i] != text[j]){
+    while(typedTextChars[i] != text[j] && i < typedTextChars.length){
       if(!currMistake){
         startIndex = i;
       }
-      currMistake += typedText[i];
-      i++;
+      currMistake += typedTextChars[i];
+      typedTextChars.splice(i, 1);
     }
 
     if(startIndex !== null){
+      let actual;
+      let expected;
+      if(startIndex < 3){
+        actual = typedTextChars.slice(startIndex - 1, startIndex).join('') + currMistake + typedTextChars.slice(i, i + 4).join('');
+        expected = text.slice(0, startIndex + 5 - 1).join('');
+      }else{
+        actual = typedTextChars.slice(startIndex - 2, startIndex).join('') + currMistake + text.slice(i, i + 3).join('');
+        expected = text.slice(startIndex - 2, startIndex + 3).join('');
+      }
+
       let mistake = {
-        actual: typedText.slice(startIndex - 2, startIndex).join('') + currMistake + typedText.slice(i, i + 3).join(''),
-        expected: text.slice(startIndex - 2, startIndex + 3).join(''),
+        actual,
+        expected,
       };
       mistakeData.push(mistake);
     }
@@ -126,10 +136,16 @@ const buildCharSequencesMap = (typedText, text, seqLen) => {
 
   let i = 1;
   let j = 1;
-  while(j < text.length - seqLen + 1){
+
+  while(typedText[1].char !== text[1]){
+    typedText.splice(1, 1);
+  }
+  
+  while(j < text.length - seqLen){
 
     let mistakeTime = 0;
-    while(typedText[i + seqLen - 1].char != text[j + seqLen - 1]){
+
+    while(typedText[i + seqLen - 1].char !== text[j + seqLen - 1]){
       mistakeTime += typedText[i + seqLen - 1].time;
       typedText.splice(i + seqLen - 1, 1);
     }
