@@ -1,16 +1,35 @@
 const TypingTest = require('../models/typingTest')
-
+const jwt = require("jsonwebtoken");
 const { body, validationResult } = require("express-validator");
 
 
-const saveTypingTest = () => {
 
-}
+// const getTypingTestData = async (req, res) => {
+  
+//   if(token){
+//     let authData = jwt.verify(token, process.env.TOKEN_SECRET);
+  
+//     if(authData){
+//       //get data from database
+//       let data = await TypingTest.find({ user: authData.user._id });
+
+//       res.status(200).json({ data });
+//     }else{
+//       res.sendStatus(403);
+//     }
+//   }else{
+//     res.sendStatus(403);
+//   }
+// }
 
 const analyzeData = [
   body('text', 'text required').trim().isLength({min: 1}), //not escaped
   body('typedText.*.char', 'typedText[].char is not length 1').isLength({ min: 1, max: 1 }),
   body('typedText.*.time', 'typedText[].time is not numeric').isNumeric(),
+  body('wpm', 'wpm required').trim().isLength({min: 1}).isNumeric(),
+  body('accuracy', 'accuracy required').trim().isLength({min: 1}).isNumeric(),
+  body('time', 'time required').trim().isLength({min: 1}).isNumeric(),
+
 
   async (req, res) => {
     const errors = validationResult(req);
@@ -26,11 +45,34 @@ const analyzeData = [
       let charSequencesMap = buildCharSequencesMap(typedText, text, seqLen);
       let sequences = getBestAndWorstSequences(charSequencesMap);
 
+      const token = req.headers['x-access-token'];
+
+      if(token){
+        let authData = jwt.verify(token, process.env.TOKEN_SECRET);
+      
+        //if authData then save to database
+        if(authData){
+          saveTypingTest(authData, req);
+        }
+      }
+
       //after calculations, I save to database if there is a valid authtoken provided, in both cases the server responds with the new calculations
       res.status(200).json({ mistakeData, bestSequences: sequences.best, worstSequences: sequences.worst });
     }
   }
 ]
+
+const saveTypingTest = async (authData, req) => {
+  let typingTest = await new TypingTest({
+    user: authData.user._id,
+    text: req.body.text,
+    typedText: req.body.typedText,
+    wpm: req.body.wpm,
+    accuracy: req.body.accuracy,
+    time: req.body.time,
+  }).save();
+}
+
 
 
 

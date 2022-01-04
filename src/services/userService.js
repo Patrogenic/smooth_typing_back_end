@@ -2,6 +2,7 @@ const User = require('../models/user');
 // const async = require('async');
 const jwt = require("jsonwebtoken");
 const bcrypt = require('bcryptjs');
+const TypingTest = require('../models/typingTest')
 
 const { body, validationResult } = require("express-validator");
 
@@ -55,7 +56,7 @@ const saveUser = async (username, password) => {
 
   let user = await new User({ username, password }).save();
 
-  const token = jwt.sign({ user }, process.env.TOKEN_SECRET, { expiresIn: '1hr' });
+  const token = jwt.sign({ user }, process.env.TOKEN_SECRET, { expiresIn: '1h' });
   return { username: user.username,  token};
 }
 
@@ -76,8 +77,9 @@ const login = [
         const match = await bcrypt.compare(req.body.password, user.password);
 
         if(match){
-          const token = jwt.sign({ user }, process.env.TOKEN_SECRET, { expiresIn: '1s' });
-          res.json({ username: user.username, token });
+          const token = jwt.sign({ user }, process.env.TOKEN_SECRET, { expiresIn: '1h' });
+          typingData = await TypingTest.find({ user: user._id });
+          res.json({ username: user.username, token, typingData });
         }else{
           throw new Error("Invalid Credentials");
         }
@@ -93,7 +95,7 @@ const validate = (req, res) => {
   const token = req.headers['x-access-token'];
 
   if(token){
-    let authData = jwt.verify(req.token, process.env.TOKEN_SECRET);
+    let authData = jwt.verify(token, process.env.TOKEN_SECRET);
   
     if(authData){
       res.sendStatus(200);
